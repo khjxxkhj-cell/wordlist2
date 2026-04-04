@@ -1,0 +1,624 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>LEXICON // TACTICAL MEMORY SYSTEM</title>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;700&display=swap" rel="stylesheet" />
+<script src="https://cdn.tailwindcss.com"></script>
+<script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.2/Sortable.min.js"></script>
+<style>
+:root{
+  --c:#00e5ff; --g:#00ff88; --r:#FF0000; --y:#ffe600;
+  --bg0:#060810; --bg1:#0a0f1a; --bg2:#0d1525;
+  --bd:rgba(0,229,255,.15); --bdb:rgba(0,229,255,.45);
+  --td:rgba(0,229,255,.4); --tm:rgba(0,229,255,.7); --tb:rgba(0,229,255,1);
+  --sc:0 0 8px rgba(0,229,255,.6),0 0 24px rgba(0,229,255,.18);
+  --sg:0 0 8px rgba(0,255,136,.6),0 0 24px rgba(0,255,136,.18);
+  --sr:0 0 8px rgba(255,0,0,.6),0 0 24px rgba(255,0,0,.18);
+  --sy:0 0 8px rgba(255,230,0,.6),0 0 24px rgba(255,230,0,.18);
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'JetBrains Mono',monospace;background:var(--bg0);color:var(--tb);min-height:100vh;overflow-x:hidden}
+body::before{content:'';position:fixed;inset:0;background:repeating-linear-gradient(0deg,transparent,transparent 2px,rgba(0,229,255,.012) 2px,rgba(0,229,255,.012) 4px);pointer-events:none;z-index:9999}
+body::after{content:'';position:fixed;inset:0;background-image:linear-gradient(rgba(0,229,255,.035) 1px,transparent 1px),linear-gradient(90deg,rgba(0,229,255,.035) 1px,transparent 1px);background-size:40px 40px;pointer-events:none;z-index:0}
+.z1{position:relative;z-index:1}
+.lbl{font-size:10px;letter-spacing:.2em;color:var(--td);text-transform:uppercase}
+.gc{color:var(--c);text-shadow:var(--sc)} .gg{color:var(--g);text-shadow:var(--sg)}
+.gr{color:var(--r);text-shadow:var(--sr)} .gy{color:var(--y);text-shadow:var(--sy)}
+.btn{font-family:inherit;font-size:11px;letter-spacing:.1em;text-transform:uppercase;cursor:pointer;border:1px solid;padding:6px 14px;transition:all .15s;background:transparent;user-select:none;white-space:nowrap;display:inline-flex;align-items:center;gap:4px}
+.bc{border-color:var(--c);color:var(--c)} .bc:hover{background:rgba(0,229,255,.1);box-shadow:var(--sc)}
+.bg_{border-color:var(--g);color:var(--g)} .bg_:hover{background:rgba(0,255,136,.1);box-shadow:var(--sg)}
+.br{border-color:var(--r);color:var(--r)} .br:hover{background:rgba(255,0,0,.1);box-shadow:var(--sr)}
+.by{border-color:var(--y);color:var(--y)} .by:hover{background:rgba(255,230,0,.1);box-shadow:var(--sy)}
+.bgh{border-color:var(--bd);color:var(--tm)} .bgh:hover{border-color:var(--bdb);color:var(--tb)}
+.btn:disabled{opacity:0.5;pointer-events:none;}
+.fi{font-family:inherit;font-size:12px;background:rgba(0,229,255,.04);border:1px solid var(--bd);color:var(--tb);padding:7px 11px;outline:none;transition:border-color .2s,box-shadow .2s;width:100%}
+.fi:focus{border-color:var(--c);box-shadow:0 0 12px rgba(0,229,255,.15)}
+.fi::placeholder{color:var(--td)}
+.pnl{background:var(--bg2);border:1px solid var(--bd);position:relative;overflow:hidden}
+.pnl::before{content:'';position:absolute;inset:0;background:linear-gradient(135deg,rgba(0,229,255,.025) 0%,transparent 55%);pointer-events:none}
+.cnr::before{content:'';position:absolute;top:0;left:0;width:10px;height:10px;border-top:1px solid var(--c);border-left:1px solid var(--c)}
+.cnr::after{content:'';position:absolute;bottom:0;right:0;width:10px;height:10px;border-bottom:1px solid var(--c);border-right:1px solid var(--c)}
+.mbg{position:fixed;inset:0;background:rgba(6,8,16,.9);backdrop-filter:blur(5px);z-index:200;display:none;align-items:center;justify-content:center}
+.mbg.open{display:flex}
+.mbox{background:var(--bg1);border:1px solid var(--bdb);box-shadow:0 0 48px rgba(0,229,255,.1);width:min(600px,96vw);max-height:90vh;display:flex;flex-direction:column;position:relative}
+.mbox::before{content:'';position:absolute;top:0;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,var(--c),transparent)}
+.mhead{padding:20px 24px 14px;border-bottom:1px solid var(--bd);flex-shrink:0}
+.mbody{padding:20px 24px;overflow-y:auto;flex:1}
+.mfoot{padding:14px 24px;border-top:1px solid var(--bd);display:flex;gap:10px;justify-content:flex-end;flex-shrink:0}
+.view{display:none}.view.active{display:block}
+.si{border:1px solid var(--bd);background:var(--bg2);padding:12px 16px;transition:all .2s;position:relative;overflow:hidden;margin-bottom:8px}
+.si::after{content:'';position:absolute;left:0;top:0;bottom:0;width:2px;background:var(--c);transform:scaleY(0);transition:transform .2s;transform-origin:bottom}
+.si:hover{border-color:var(--bdb);background:rgba(0,229,255,.04)}
+.si:hover::after{transform:scaleY(1)}
+.handle{cursor:grab;color:var(--td);padding-right:12px;font-size:16px;user-select:none;display:flex;align-items:center}
+.handle:active{cursor:grabbing}
+.sortable-ghost{opacity:0.4;background:rgba(0,229,255,0.1)!important;border-style:dashed}
+.wr{border-bottom:1px solid var(--bd);transition:background .12s}
+.wr:hover{background:rgba(0,229,255,.04)}
+.wr:last-child{border-bottom:none}
+.wer{display:flex;gap:8px;align-items:center;margin-bottom:8px}
+.wer .fi{flex:1}
+.cs{perspective:900px}
+.ci{position:relative;width:100%;transition:transform .4s cubic-bezier(.4,0,.2,1);transform-style:preserve-3d}
+.ci.flipped{transform:rotateY(180deg)}
+.cf{backface-visibility:hidden;-webkit-backface-visibility:hidden;width:100%}
+.cb{transform:rotateY(180deg);position:absolute;top:0;left:0}
+.tc{border:1px solid var(--bd);background:var(--bg2);cursor:pointer;padding:44px 28px;text-align:center;min-height:200px;display:flex;align-items:center;justify-content:center}
+.pb{height:2px;background:var(--bd);overflow:hidden}
+.pf{height:100%;background:var(--c);box-shadow:var(--sc);transition:width .35s ease}
+.tb_{border-bottom:1px solid var(--bd);padding:10px 20px;display:flex;align-items:center;gap:16px;background:rgba(10,15,26,.85);backdrop-filter:blur(8px);position:sticky;top:0;z-index:100}
+.bca{color:var(--g);border:1px solid var(--g);text-shadow:var(--sg);box-shadow:0 0 5px rgba(0,255,136,.25)}
+.bwa{color:var(--y);border:1px solid var(--y);text-shadow:var(--sy);box-shadow:0 0 5px rgba(255,230,0,.25)}
+.bcr{color:var(--r);border:1px solid var(--r);text-shadow:var(--sr);box-shadow:0 0 5px rgba(255,0,0,.25)}
+@keyframes glitch{0%{clip-path:inset(20% 0 60% 0);transform:translate(-3px,0)}20%{clip-path:inset(50% 0 30% 0);transform:translate(3px,0)}40%{clip-path:inset(10% 0 70% 0);transform:translate(-1px,0)}60%{clip-path:inset(80% 0 5% 0);transform:translate(2px,0)}80%{clip-path:inset(40% 0 40% 0);transform:translate(-2px,0)}100%{clip-path:inset(0);transform:translate(0)}}
+.ge{animation:glitch .28s steps(1) forwards}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:0}}
+.cur::after{content:'_';animation:blink 1s infinite}
+@keyframes ld{0%,80%,100%{opacity:.3}40%{opacity:1}}
+.dot{display:inline-block;animation:ld 1.2s infinite}.dot:nth-child(2){animation-delay:.2s}.dot:nth-child(3){animation-delay:.4s}
+::-webkit-scrollbar{width:4px}::-webkit-scrollbar-track{background:var(--bg0)}::-webkit-scrollbar-thumb{background:var(--bdb)}
+@media(max-width:600px){.tc{padding:28px 16px;min-height:150px}.btn{padding:5px 10px;font-size:10px}}
+</style>
+</head>
+<body>
+
+<header class="tb_ z1">
+  <div class="flex items-center gap-3">
+    <div style="width:7px;height:7px;border-radius:50%;background:var(--c);animation:blink 2s infinite"></div>
+    <span class="gc font-bold tracking-widest" style="font-size:14px">LEXICON</span>
+    <span class="lbl hidden sm:inline">// TACTICAL MEMORY SYSTEM v2.1</span>
+  </div>
+  <div class="ml-auto flex items-center gap-4">
+    <span class="lbl" id="statusLabel">STANDBY</span>
+    <div style="width:80px"><div class="pb"><div class="pf" id="topProg" style="width:0%"></div></div></div>
+  </div>
+</header>
+
+<main class="z1 mx-auto px-4 py-6" style="max-width:720px">
+  <div id="view-sets" class="view active">
+    <div class="flex items-center justify-between mb-6">
+      <div>
+        <div class="lbl mb-1">DATABASE // WORD SETS</div>
+        <h1 class="gc font-bold cur" style="font-size:20px">단어 세트 목록</h1>
+      </div>
+      <button class="btn bc" id="btnOpenNewSet">[ + ] 새 세트</button>
+    </div>
+    <div id="setsList"><div class="lbl text-center py-10"><span class="dot">.</span><span class="dot">.</span><span class="dot">.</span> LOADING</div></div>
+  </div>
+
+  <div id="view-words" class="view">
+    <div class="flex items-center gap-3 mb-5 flex-wrap">
+      <button class="btn bgh" id="btnBackToSets">← BACK</button>
+      <div class="flex-1 min-w-0">
+        <div class="lbl mb-1">SELECTED SET</div>
+        <h2 class="gc font-bold truncate" style="font-size:17px" id="wordSetTitle"></h2>
+      </div>
+      <button class="btn bc" id="btnOpenAddWord">[ + ] 단어 추가</button>
+    </div>
+
+    <div class="pnl cnr p-0 mb-4">
+      <div class="flex items-center justify-between px-4 py-2" style="border-bottom:1px solid var(--bd)">
+        <span class="lbl">ROUND 1 // ALL WORDS</span>
+        <button class="btn bc" id="btnTest1">1차 테스트 진행 →</button>
+      </div>
+      <div id="wl1" class="overflow-y-auto" style="max-height:60vh"></div>
+    </div>
+    <div class="pnl cnr p-0 mb-4" id="r2panel" style="display:none">
+      <div class="flex items-center justify-between px-4 py-2" style="border-bottom:1px solid var(--bd)">
+        <span class="lbl">ROUND 2 // FAILED SET</span>
+        <button class="btn by" id="btnTest2">2차 테스트 진행 →</button>
+      </div>
+      <div id="wl2" class="overflow-y-auto" style="max-height:50vh"></div>
+    </div>
+    <div class="pnl cnr p-0 mb-4" id="r3panel" style="display:none">
+      <div class="flex items-center justify-between px-4 py-2" style="border-bottom:1px solid var(--bd)">
+        <span class="lbl">ROUND 3 // CRITICAL SET</span>
+        <button class="btn br" id="btnTest3">3차 테스트 진행 →</button>
+      </div>
+      <div id="wl3" class="overflow-y-auto" style="max-height:50vh"></div>
+    </div>
+  </div>
+
+  <div id="view-test" class="view">
+    <div class="flex items-center gap-3 mb-4 flex-wrap">
+      <button class="btn bgh" id="btnExitTest">← 돌아가기</button>
+      <div class="flex-1">
+        <div class="lbl" id="testRoundLbl">ROUND 1</div>
+        <div class="gc font-bold mt-0.5" style="font-size:13px" id="testSetLbl"></div>
+      </div>
+      <div class="text-right">
+        <div class="lbl">PROGRESS</div>
+        <span class="gc font-bold" id="testCounter" style="font-size:13px">0/0</span>
+      </div>
+    </div>
+    <div class="pb mb-6"><div class="pf" id="testProg" style="width:0%"></div></div>
+    <div class="cs mb-6">
+      <div class="ci" id="cardInner">
+        <div class="cf tc" id="cardFront">
+          <div>
+            <div class="lbl mb-3">WORD // CLICK TO REVEAL</div>
+            <div class="gc font-bold" id="cardWord" style="font-size:28px">—</div>
+          </div>
+        </div>
+        <div class="cf cb tc" style="background:var(--bg1)">
+          <div style="width:100%">
+            <div class="lbl mb-2">MEANING</div>
+            <div class="gg font-bold mb-2" id="cardMeaning" style="font-size:20px">—</div>
+            <div class="lbl mb-4" id="cardWordSub"></div>
+            <div class="flex gap-3 justify-center">
+              <button class="btn bg_" style="font-size:14px;padding:10px 32px" id="btnO">[ O ]</button>
+              <button class="btn br"  style="font-size:14px;padding:10px 32px" id="btnX">[ X ]</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="lbl text-center">카드 클릭 = 뜻 확인 &nbsp;│&nbsp; Space/Enter = 플립 &nbsp; O = 정답 &nbsp; X = 오답</div>
+  </div>
+
+  <div id="view-result" class="view">
+    <div class="text-center py-14">
+      <div class="lbl mb-2">ANALYSIS COMPLETE</div>
+      <h2 class="gc font-bold mb-6" id="resultTitle" style="font-size:22px">테스트 완료</h2>
+      <div class="pnl cnr mx-auto p-6 mb-6" style="max-width:320px">
+        <div class="lbl mb-4">ROUND SUMMARY</div>
+        <div class="space-y-2" style="font-size:13px">
+          <div class="flex justify-between"><span style="opacity:.55">총 단어</span><span id="resTotal" class="font-bold">0</span></div>
+          <div class="flex justify-between"><span class="gg">정답 [ O ]</span><span id="resCorrect" class="gg font-bold">0</span></div>
+          <div class="flex justify-between"><span class="gr">오답 [ X ]</span><span id="resWrong" class="gr font-bold">0</span></div>
+        </div>
+      </div>
+      <div id="resultMsg" class="lbl mb-8"></div>
+      <div class="flex gap-3 justify-center flex-wrap">
+        <button class="btn bgh" id="btnContinue" style="display:none">다음 라운드 →</button>
+        <button class="btn bc" id="btnResultBack">세트로 돌아가기</button>
+      </div>
+    </div>
+  </div>
+</main>
+
+<div class="mbg" id="modalNewSet">
+  <div class="mbox">
+    <div class="mhead">
+      <div class="lbl mb-1">NEW WORD SET</div>
+      <h3 class="gc font-bold" style="font-size:16px">세트 생성 + 단어 등록</h3>
+    </div>
+    <div class="mbody">
+      <div class="lbl mb-1">SET NAME</div>
+      <input id="nsName" class="fi mb-5" placeholder="예) Chapter 1 — 수능 어휘" />
+      <div class="flex items-center justify-between mb-2">
+        <div class="lbl">WORD LIST</div>
+        <button class="btn bc" style="font-size:10px;padding:4px 10px" id="btnAddRow">+ 행 추가</button>
+      </div>
+      <div id="wordRows"></div>
+      <div class="lbl mt-3" style="color:rgba(0,229,255,.35)">// 빈 행은 자동으로 무시됩니다</div>
+    </div>
+    <div class="mfoot">
+      <button class="btn bgh" id="btnCancelNewSet">취소</button>
+      <button class="btn bc"  id="btnConfirmNewSet">[ 세트 생성 ]</button>
+    </div>
+  </div>
+</div>
+
+<div class="mbg" id="modalEditSet">
+  <div class="mbox">
+    <div class="mhead">
+      <div class="lbl mb-1">EDIT SET</div>
+      <h3 class="gc font-bold" style="font-size:16px">세트 편집</h3>
+    </div>
+    <div class="mbody">
+      <div class="lbl mb-1">SET NAME</div>
+      <input id="esName" class="fi" placeholder="세트 이름..." />
+    </div>
+    <div class="mfoot">
+      <button class="btn br"  id="btnDeleteSet">[ 세트 삭제 ]</button>
+      <button class="btn bgh" id="btnCancelEditSet">취소</button>
+      <button class="btn bc"  id="btnConfirmEditSet">[ 저장 ]</button>
+    </div>
+  </div>
+</div>
+
+<div class="mbg" id="modalAddWord">
+  <div class="mbox">
+    <div class="mhead">
+      <div class="lbl mb-1">NEW WORD ENTRY</div>
+      <h3 class="gc font-bold" style="font-size:16px">단어 추가</h3>
+    </div>
+    <div class="mbody">
+      <div class="lbl mb-1">WORD (Term)</div>
+      <input id="awTerm" class="fi mb-4" placeholder="예) ambiguous" />
+      <div class="lbl mb-1">MEANING (뜻)</div>
+      <input id="awMeaning" class="fi" placeholder="예) 모호한, 불분명한" />
+    </div>
+    <div class="mfoot">
+      <button class="btn bgh" id="btnCancelAddWord">취소</button>
+      <button class="btn bc"  id="btnConfirmAddWord">[ 추가 ]</button>
+    </div>
+  </div>
+</div>
+
+<div class="mbg" id="modalEditWord">
+  <div class="mbox">
+    <div class="mhead">
+      <div class="lbl mb-1">EDIT WORD</div>
+      <h3 class="gc font-bold" style="font-size:16px">단어 편집</h3>
+    </div>
+    <div class="mbody">
+      <div class="lbl mb-1">WORD (Term)</div>
+      <input id="ewTerm" class="fi mb-4" placeholder="단어..." />
+      <div class="lbl mb-1">MEANING (뜻)</div>
+      <input id="ewMeaning" class="fi" placeholder="뜻..." />
+    </div>
+    <div class="mfoot">
+      <button class="btn br"  id="btnDeleteWord">[ 삭제 ]</button>
+      <button class="btn bgh" id="btnCancelEditWord">취소</button>
+      <button class="btn bc"  id="btnConfirmEditWord">[ 저장 ]</button>
+    </div>
+  </div>
+</div>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+import { getFirestore, collection, doc, addDoc, getDocs, getDoc, updateDoc, deleteDoc, onSnapshot, writeBatch }
+  from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+
+const app = initializeApp({
+  apiKey:"AIzaSyCt_qHgAHoU5gPFlr0mvRpyA17I1JdnC4Q",
+  authDomain:"wordlist-2.firebaseapp.com",
+  projectId:"wordlist-2",
+  storageBucket:"wordlist-2.firebasestorage.app",
+  messagingSenderId:"359337303612",
+  appId:"1:359337303612:web:c383388464e78e0493ad39"
+});
+const db = getFirestore(app);
+
+let sets=[], words=[];
+let curSetId=null, curSetData=null;
+let editSetId=null, editWordId=null;
+let tRound=1, tQueue=[], tIdx=0;
+let fail1=[], fail2=[], fail3=[];
+let flipped=false;
+let sortableInst = null;
+
+const $=id=>document.getElementById(id);
+const ss=t=>$('statusLabel').textContent=t;
+const sp=p=>$('topProg').style.width=p+'%';
+const openM=id=>$(id).classList.add('open');
+const closeM=id=>$(id).classList.remove('open');
+const showV=id=>{document.querySelectorAll('.view').forEach(v=>v.classList.remove('active'));$('view-'+id).classList.add('active')};
+const esc=s=>String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+const shuffle=a=>{const r=[...a];for(let i=r.length-1;i>0;i--){const j=0|Math.random()*(i+1);[r[i],r[j]]=[r[j],r[i]];}return r;};
+
+['modalEditSet','modalAddWord','modalEditWord'].forEach(id=>{
+  $(id).addEventListener('click',e=>{ if(e.target===$(id)) closeM(id); });
+});
+document.addEventListener('keydown',e=>{
+  if(e.key==='Escape') ['modalNewSet','modalEditSet','modalAddWord','modalEditWord'].forEach(closeM);
+  if($('view-test').classList.contains('active')){
+    if(e.key===' '||e.key==='Enter'){e.preventDefault();flipCard();}
+    if(e.key==='o'||e.key==='O') judge(true);
+    if(e.key==='x'||e.key==='X') judge(false);
+  }
+});
+
+function loadSets(){
+  ss('LOADING...');
+  onSnapshot(collection(db,'wordSets'),snap=>{
+    sets=snap.docs.map(d=>({id:d.id,...d.data()}));
+    sets.sort((a,b)=>(a.orderIndex??999999)-(b.orderIndex??999999));
+    renderSets();
+    ss('ONLINE'); sp(100); setTimeout(()=>sp(0),600);
+  });
+}
+
+function badgeHtml(level,small=true){
+  const m={caution:['bca','주의'],warning:['bwa','경고'],critical:['bcr','위험']};
+  if(!m[level]) return '';
+  const[c,l]=m[level];
+  return small ? `<span class="px-2 py-0.5 ${c}" style="font-size:10px;font-weight:700;letter-spacing:.15em">${l}</span>` : `<span class="px-3 py-1 ${c}" style="font-size:11px;font-weight:700;letter-spacing:.15em">${l}</span>`;
+}
+
+function renderSets(){
+  const el=$('setsList');
+  if(!sets.length){el.innerHTML=`<div class="lbl text-center py-10">// 데이터 없음 — 새 세트를 추가하세요</div>`;return;}
+  el.innerHTML=sets.map(s=>`
+    <div class="si flex items-center gap-3" data-id="${s.id}">
+      <div class="handle">☰</div>
+      <div class="flex-1 min-w-0" style="cursor:pointer" data-sel="${s.id}">
+        <div class="font-bold truncate" style="font-size:13px;color:var(--tb)">${esc(s.name)}</div>
+        <div class="lbl mt-0.5">${s.wordCount||0} WORDS</div>
+      </div>
+      <button class="btn bgh" style="font-size:10px;padding:4px 10px" data-es="${s.id}">편집</button>
+      <span class="gc" style="opacity:.35;font-size:13px">→</span>
+    </div>`).join('');
+  el.querySelectorAll('[data-sel]').forEach(b=>b.addEventListener('click',()=>selectSet(b.dataset.sel)));
+  el.querySelectorAll('[data-es]').forEach(b=>b.addEventListener('click',()=>openEditSet(b.dataset.es)));
+
+  if(sortableInst) sortableInst.destroy();
+  sortableInst = new Sortable(el, {
+    handle: '.handle', animation: 200, ghostClass: 'sortable-ghost',
+    onEnd: async function(){
+      const b=writeBatch(db);
+      el.querySelectorAll('.si').forEach((item,idx)=>b.update(doc(db,'wordSets',item.dataset.id),{orderIndex:idx}));
+      await b.commit();
+    }
+  });
+}
+
+function addWordRow(t='',m=''){
+  const div=document.createElement('div');
+  div.className='wer';
+  div.innerHTML=`<input class="fi" placeholder="단어 (Term)" value="${esc(t)}" /><input class="fi" placeholder="뜻 (Meaning)" value="${esc(m)}" /><button class="btn br" style="padding:5px 9px;flex-shrink:0">✕</button>`;
+  div.querySelector('.br').addEventListener('click',()=>div.remove());
+  div.querySelectorAll('.fi')[1].addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();addWordRow();}});
+  $('wordRows').appendChild(div);
+  div.querySelectorAll('.fi')[0].focus();
+}
+
+$('btnOpenNewSet').addEventListener('click',()=>{
+  $('nsName').value=''; $('wordRows').innerHTML='';
+  addWordRow(); addWordRow(); addWordRow();
+  openM('modalNewSet'); setTimeout(()=>$('nsName').focus(),80);
+});
+$('btnAddRow').addEventListener('click',()=>addWordRow());
+$('btnCancelNewSet').addEventListener('click',()=>closeM('modalNewSet'));
+$('btnConfirmNewSet').addEventListener('click',async()=>{
+  const n=$('nsName').value.trim(); if(!n) return;
+  const pairs=[];
+  $('wordRows').querySelectorAll('.wer').forEach(r=>{
+    const ins=r.querySelectorAll('.fi');
+    const t=ins[0].value.trim(), m=ins[1].value.trim();
+    if(t&&m) pairs.push({term:t,meaning:m});
+  });
+  ss('WRITING...');
+  const sr=await addDoc(collection(db,'wordSets'),{name:n,wordCount:pairs.length,dangerLevel:null,createdAt:Date.now(),orderIndex:sets.length});
+  if(pairs.length){
+    const b=writeBatch(db);
+    pairs.forEach(p=>b.set(doc(collection(db,'wordSets',sr.id,'words')),{term:p.term,meaning:p.meaning,addedAt:Date.now()}));
+    await b.commit();
+  }
+  closeM('modalNewSet'); ss('SAVED'); selectSet(sr.id);
+});
+
+function openEditSet(sid){
+  editSetId=sid; const s=sets.find(x=>x.id===sid);
+  $('esName').value=s?s.name:'';
+  openM('modalEditSet'); setTimeout(()=>$('esName').focus(),80);
+}
+$('btnCancelEditSet').addEventListener('click',()=>closeM('modalEditSet'));
+$('btnConfirmEditSet').addEventListener('click',async()=>{
+  const n=$('esName').value.trim(); if(!n||!editSetId) return;
+  await updateDoc(doc(db,'wordSets',editSetId),{name:n});
+  closeM('modalEditSet');
+});
+$('btnDeleteSet').addEventListener('click',async()=>{
+  if(!editSetId||!confirm('삭제하시겠습니까?')) return;
+  const ws=await getDocs(collection(db,'wordSets',editSetId,'words'));
+  const b=writeBatch(db);
+  ws.docs.forEach(d=>b.delete(d.ref)); b.delete(doc(db,'wordSets',editSetId));
+  await b.commit(); closeM('modalEditSet');
+});
+
+async function selectSet(sid){
+  curSetId=sid; const snap=await getDoc(doc(db,'wordSets',sid));
+  curSetData={id:sid,...snap.data()};
+  $('wordSetTitle').textContent=curSetData.name;
+  $('testSetLbl').textContent=curSetData.name;
+  fail1=[]; fail2=[]; fail3=[];
+  $('r2panel').style.display='none'; $('r3panel').style.display='none';
+  await loadWords(); showV('words');
+}
+
+async function loadWords(){
+  const snap=await getDocs(collection(db,'wordSets',curSetId,'words'));
+  words=snap.docs.map(d=>({id:d.id,...d.data()}));
+  renderWL('wl1',words,true);
+}
+
+function renderWL(cid,list,editable){
+  const el=$(cid);
+  if(!list.length){el.innerHTML=`<div class="lbl text-center py-4">// 단어 없음</div>`;return;}
+  el.innerHTML=list.map(w=>{
+    const wordBadge = badgeHtml(w.dangerLevel||null);
+    return `
+    <div class="wr flex items-center px-4 py-2 gap-3">
+      <span class="flex-1 font-bold" style="font-size:13px;color:var(--tb)">${esc(w.term)}</span>
+      <span class="flex-1" style="font-size:11px;color:var(--tm)">${esc(w.meaning)}</span>
+      <div class="flex items-center gap-2">
+        ${wordBadge}
+        ${editable?`<button class="btn bgh" style="font-size:10px;padding:3px 8px" data-ew="${w.id}">편집</button>`:''}
+      </div>
+    </div>`;
+  }).join('');
+  if(editable) el.querySelectorAll('[data-ew]').forEach(b=>b.addEventListener('click',()=>openEditWord(b.dataset.ew)));
+}
+
+$('btnBackToSets').addEventListener('click',()=>showV('sets'));
+$('btnExitTest').addEventListener('click',()=>selectSet(curSetId));
+$('btnResultBack').addEventListener('click',async()=>{
+  // Firestore에서 최신 단어 데이터(배지 포함) 다시 로드
+  await loadWords();
+  showV('words');
+});
+
+$('btnOpenAddWord').addEventListener('click',()=>{
+  $('awTerm').value=''; $('awMeaning').value='';
+  openM('modalAddWord'); setTimeout(()=>$('awTerm').focus(),80);
+});
+$('btnConfirmAddWord').addEventListener('click',async()=>{
+  const t=$('awTerm').value.trim(), m=$('awMeaning').value.trim(); if(!t||!m) return;
+  await addDoc(collection(db,'wordSets',curSetId,'words'),{term:t,meaning:m,addedAt:Date.now()});
+  await updateDoc(doc(db,'wordSets',curSetId),{wordCount:words.length+1});
+  closeM('modalAddWord'); await loadWords();
+});
+$('btnCancelAddWord').addEventListener('click',()=>closeM('modalAddWord'));
+
+function openEditWord(wid){
+  editWordId=wid; const w=words.find(x=>x.id===wid);
+  $('ewTerm').value=w?w.term:''; $('ewMeaning').value=w?w.meaning:'';
+  openM('modalEditWord'); setTimeout(()=>$('ewTerm').focus(),80);
+}
+$('btnConfirmEditWord').addEventListener('click',async()=>{
+  const t=$('ewTerm').value.trim(), m=$('ewMeaning').value.trim(); if(!t||!m||!editWordId) return;
+  await updateDoc(doc(db,'wordSets',curSetId,'words',editWordId),{term:t,meaning:m});
+  closeM('modalEditWord'); await loadWords();
+});
+$('btnDeleteWord').addEventListener('click',async()=>{
+  if(!editWordId||!confirm('삭제하시겠습니까?')) return;
+  await deleteDoc(doc(db,'wordSets',curSetId,'words',editWordId));
+  await updateDoc(doc(db,'wordSets',curSetId),{wordCount:Math.max(0,words.length-1)});
+  closeM('modalEditWord'); await loadWords();
+});
+$('btnCancelEditWord').addEventListener('click',()=>closeM('modalEditWord'));
+
+async function startTest(r){
+  tRound=r; const p=r===1?words:r===2?fail1:fail2;
+  if(!p.length) return;
+  // 1차 시작 시 이전 테스트 기록 초기화
+  if(r===1){
+    fail1=[]; fail2=[]; fail3=[];
+    const b=writeBatch(db);
+    words.forEach(w=>{ b.update(doc(db,'wordSets',curSetId,'words',w.id),{dangerLevel:null}); w.dangerLevel=null; });
+    await b.commit();
+  }
+  tQueue=shuffle(p); tIdx=0; flipped=false;
+  $('testRoundLbl').textContent=`ROUND ${r} // ${['ALL WORDS','FAILED SET','CRITICAL SET'][r-1]}`;
+  showV('test'); renderCard();
+}
+$('btnTest1').addEventListener('click',()=>startTest(1));
+$('btnTest2').addEventListener('click',()=>startTest(2));
+$('btnTest3').addEventListener('click',()=>startTest(3));
+
+function renderCard(){
+  const w=tQueue[tIdx], total=tQueue.length;
+  const ci=$('cardInner');
+  ci.style.transition = 'none';
+  ci.classList.remove('flipped');
+  $('cardWord').textContent=w.term;
+  $('cardMeaning').textContent=w.meaning;
+  $('cardWordSub').textContent=w.term;
+  $('testCounter').textContent=`${tIdx+1} / ${total}`;
+  const pct=Math.round((tIdx/total)*100);
+  sp(pct); $('testProg').style.width=pct+'%';
+  flipped=false;
+  void ci.offsetWidth; 
+  ci.style.transition = '';
+  ci.classList.add('ge');
+  setTimeout(()=>ci.classList.remove('ge'),300);
+}
+
+function flipCard(){if(flipped)return;flipped=true;$('cardInner').classList.add('flipped');}
+function judge(c){
+  if(!flipped)return;
+  if(!c){
+    if(tRound===1)fail1.push(tQueue[tIdx]);
+    else if(tRound===2)fail2.push(tQueue[tIdx]);
+    else fail3.push(tQueue[tIdx]);
+  }
+  tIdx++; tIdx>=tQueue.length ? showResult() : renderCard();
+}
+
+$('cardFront').addEventListener('click',flipCard);
+$('btnO').addEventListener('click',e=>{e.stopPropagation();judge(true);});
+$('btnX').addEventListener('click',e=>{e.stopPropagation();judge(false);});
+
+async function saveWordBadges(){
+  // 각 단어에 dangerLevel 저장: fail3 > fail2 > fail1 > null
+  const b = writeBatch(db);
+  words.forEach(w=>{
+    let lvl = null;
+    if(fail3.some(f=>f.id===w.id)) lvl='critical';
+    else if(fail2.some(f=>f.id===w.id)) lvl='warning';
+    else if(fail1.some(f=>f.id===w.id)) lvl='caution';
+    b.update(doc(db,'wordSets',curSetId,'words',w.id),{dangerLevel:lvl});
+    w.dangerLevel = lvl; // 로컬 동기화
+  });
+  await b.commit();
+}
+
+async function showResult(){
+  const total=tQueue.length;
+  const wArr = tRound===1 ? fail1 : (tRound===2 ? fail2 : fail3);
+  const wrong = wArr.length;
+  $('resTotal').textContent=total; 
+  $('resCorrect').textContent=total-wrong; 
+  $('resWrong').textContent=wrong;
+  sp(100);
+  const cont=$('btnContinue'), msg=$('resultMsg');
+  if(tRound===1){
+    $('resultTitle').textContent='1차 테스트 완료';
+    if(wrong){
+      msg.textContent=`${wrong}개 단어 → 2차 테스트 대상`;
+      cont.style.display='';
+      cont.textContent='2차 오답 확인 →';
+    } else {
+      msg.textContent='// 오답 없음 — 완벽한 결과';
+      cont.style.display='none';
+      await saveWordBadges();
+    }
+  } else if(tRound===2){
+    $('resultTitle').textContent='2차 테스트 완료';
+    if(wrong){
+      msg.textContent=`${wrong}개 단어 → 3차 테스트 대상`;
+      cont.style.display='';
+      cont.textContent='3차 오답 확인 →';
+    } else {
+      msg.textContent='// 2차 통과 — 주의(CAUTION) 등급';
+      cont.style.display='none';
+      await saveWordBadges();
+    }
+  } else {
+    $('resultTitle').textContent='최종 테스트 완료';
+    msg.textContent=wrong?`${wrong}개 위험(CRITICAL) 등급`:'// 경고(WARNING) 등급';
+    cont.style.display='none';
+    await saveWordBadges();
+  }
+  showV('result');
+}
+
+async function saveLvl(l){
+  // 세트 레벨 dangerLevel은 더 이상 사용하지 않음 (단어별로 저장)
+}
+
+$('btnContinue').addEventListener('click',()=>{
+  if(tRound===1){
+    $('r2panel').style.display='block'; 
+    renderWL('wl1', words, true); // 원본 리스트 갱신 (주의 표시)
+    renderWL('wl2', fail1, false); 
+    showV('words'); 
+    setTimeout(() => $('r2panel').scrollIntoView({ behavior: 'smooth' }), 100);
+  } else if(tRound===2){
+    $('r3panel').style.display='block'; 
+    renderWL('wl1', words, true); // 원본 리스트 갱신 (경고 표시)
+    renderWL('wl3', fail2, false); 
+    showV('words');
+    setTimeout(() => $('r3panel').scrollIntoView({ behavior: 'smooth' }), 100);
+  }
+});
+
+loadSets();
+</script>
+</body>
+</html>
