@@ -477,9 +477,10 @@ async function selectSet(sid){
       else if(w.failRound===4) fail4.push(w);
     });
     const lr = curSetData.lastRound || 1;
-    if(lr>=1 && fail1.length){ $('r2panel').style.display='block'; renderWL('wl2',fail1,false); }
-    if(lr>=2 && fail2.length){ $('r3panel').style.display='block'; renderWL('wl3',fail2,false); }
-    if(lr>=3 && fail3.length){ $('r4panel').style.display='block'; renderWL('wl4',fail3,false); }
+    // 다음 라운드 패널 하나만 표시
+    if(lr===1 && fail1.length){ $('r2panel').style.display='block'; renderWL('wl2',fail1,false); }
+    else if(lr===2 && fail2.length){ $('r3panel').style.display='block'; renderWL('wl3',fail2,false); }
+    else if(lr===3 && fail3.length){ $('r4panel').style.display='block'; renderWL('wl4',fail3,false); }
   } else {
     // 새 세트 or 완료된 세트: 초기화
     fail1=[]; fail2=[]; fail3=[]; fail4=[];
